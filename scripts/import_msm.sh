@@ -13,7 +13,7 @@ if [ -z "$TARGET_REPO_SSH" ] || [ -z "$MSM_REPO_SSH" ] || [ -z "$SUBTREE_PATH" ]
   exit 1
 fi
 
-# Check if git-lfs is installed (for large media)
+# Check if git-lfs is installed
 if ! command -v git-lfs >/dev/null 2>&1; then
   echo "Warning: git-lfs not installed. Large files may cause issues."
   echo "Install with: brew install git-lfs && git lfs install"
@@ -23,7 +23,7 @@ fi
 git checkout -b "$FEATURE_BRANCH"
 
 # Add the subtree (squashed)
-git subtree add --prefix="$SUBTREE_PATH" --squash "$MSM_REPO_SSH" main
+git subtree add --prefix="$SUBTREE_PATH" --squash "$MSM_REPO_SSH" master
 
 # Configure Git LFS if large files are detected
 if git ls-files | grep -E '\.(mp3|wav|flac)$'; then
