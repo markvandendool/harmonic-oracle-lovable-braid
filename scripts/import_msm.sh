@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Script to import a repository as a squashed subtree
+# Script to import a repository as a squashed commit
 TARGET_REPO_SSH="$1"
 MSM_REPO_SSH="$2"
 SUBTREE_PATH="$3"
@@ -20,10 +20,32 @@ if ! command -v git-lfs >/dev/null 2>&1; then
 fi
 
 # Create and checkout feature branch
+git checkout main
+git pull --ff-only
 git checkout -b "$FEATURE_BRANCH"
 
-# Add the subtree (squashed)
-git subtree add --prefix="$SUBTREE_PATH" --squash "$MSM_REPO_SSH" master
+# Clone the MSM repo temporarily
+TEMP_DIR=$(mktemp -d)
+git clone "$MSM_REPO_SSH" "$TEMP_DIR"
+cd "$TEMP_DIR"
+
+# Get the latest commit and tree
+git checkout master
+MSM_TREE=$(git rev-parse HEAD^{tree})
+cd -
+
+# Create the subtree path and apply the squashed commit
+mkdir -p "$SUBTREE_PATH"
+cd "$SUBTREE_PATH"
+git init
+git fetch "$TEMP_DIR" master
+git read-tree --prefix="$SUBTREE_PATH" -u "$MSM_TREE"
+cd -
+git add "$SUBTREE_PATH"
+git commit -m "Squashed import of MillionSongMind into $SUBTREE_PATH"
+
+# Clean up temporary clone
+rm -rf "$TEMP_DIR"
 
 # Configure Git LFS if large files are detected
 if git ls-files | grep -E '\.(mp3|wav|flac)$'; then
